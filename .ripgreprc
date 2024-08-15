@@ -1,0 +1,2 @@
+# neovim telescope ignore raylib subdirectory
+--glob=!raylib/*

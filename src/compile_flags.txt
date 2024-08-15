@@ -1,0 +1,8 @@
+clang
+--std=c11
+-I.
+-I../raylib/src
+-Wall
+-Wextra
+-Werror=vla
+
