@@ -6,17 +6,15 @@ Depends on raylib and the required system libraries for
 whatever target platform project is being compiled to.
 
 ## Build Requirements
+- make
+- clang (Mingw-W64 on Windows)
+- ar
 ### Windows
 - Latest Windows SDK
-- Mingw-W64 with clang, make and ar
 ### Web
-- emscripten
-- Mingw-W64 with clang, make and ar (Windows only)
+- emscripten (emcc must be in path)
 ### Linux
-- glibc
-- clang
-- make
-- ar
+- glibc development tools
 - X11 development tools
 
 ## Build Instructions
@@ -34,18 +32,18 @@ clang cbuild.c -o cbuild
 - Run cbuild:
     - Windows/Linux
     ```sh
-    ./cbuild --platform=native
+    ./cbuild --target=native
     ```
     - Web
     ```sh
-    ./cbuild --platform=web
+    ./cbuild --target=web
     ```
 
 - Compiled project will be in `build` directory. Raylib library is in `vendor` directory.
 
 ## Editor Configuration
 
-A .editorconfig file is included in this repository
+An .editorconfig file is included in this repository
 to automatically configure editors that support it.
 
 If you use Neovim + Telescope (like I do),

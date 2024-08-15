@@ -103,7 +103,7 @@ int main( int argc, const char** argv ) {
             if( !path_exists( "./vendor/native/libraylib.a" ) ) {
                 int res = compile_raylib( target );
                 if( res ) {
-                    return -1;
+                    return res;
                 }
                 cb_info( "compiled raylib for native platform!" );
             }
@@ -155,32 +155,54 @@ int main( int argc, const char** argv ) {
             if( !path_exists( "./vendor/web/libraylib.a" ) ) {
                 int res = compile_raylib( target );
                 if( res ) {
-                    return -1;
+                    return res;
                 }
                 cb_info( "compiled raylib for web platform!" );
             }
 
             build_path = BUILD_PATH_WEB;
 
-            cmd = command_new(
-#if defined(PLATFORM_WINDOWS)
-                "cmd", "/C", "emcc.bat",
-#else
-                "sh", "-c", "emcc.sh",
-#endif
-                "-o", build_path,
-                "src/sources.c",
-                "vendor/web/libraylib.a",
-                "-Os", "-Wall", "-Wextra", "-Werror=vla",
-                "-Isrc", "-Iraylib/src",
-                "-s", "USE_GLFW=3",
-                "--shell-file", "raylib/src/minshell.html",
-                "-DPLATFORM_WEB",
-                "--preload-file", "resources" );
+            if(release) {
+                cmd = command_new(
+                    #if defined(PLATFORM_WINDOWS)
+                        "cmd", "/C", "emcc.bat",
+                    #else
+                        "sh", "-c", "emcc.sh",
+                    #endif
+                    "-o", build_path,
+                    "src/sources.c",
+                    "vendor/web/libraylib.a",
+                    "-Os", "-Wall", "-Wextra", "-Werror=vla",
+                    "-Isrc", "-Iraylib/src",
+                    "-s", "USE_GLFW=3",
+                    "--shell-file", "raylib/src/minshell.html",
+                    "-DPLATFORM_WEB",
+                    "--preload-file", "resources" );
+            } else {
+                cmd = command_new(
+                    #if defined(PLATFORM_WINDOWS)
+                        "cmd", "/C", "emcc.bat",
+                    #else
+                        "sh", "-c", "emcc.sh",
+                    #endif
+                    "-o", build_path,
+                    "src/sources.c",
+                    "vendor/web/libraylib.a",
+                    "-g", "-O0", "-Wall", "-Wextra", "-Werror=vla",
+                    "-Isrc", "-Iraylib/src",
+                    "-s", "USE_GLFW=3",
+                    "--shell-file", "raylib/src/minshell.html",
+                    "-DPLATFORM_WEB",
+                    "--preload-file", "resources" );
+            }
         } break;
     }
 
-    cb_info( "building project . . ." );
+    if( release ) {
+        cb_info( "building project in release mode . . ." );
+    } else {
+        cb_info( "building project in debug mode . . ." );
+    }
     PID pid = process_exec( cmd, false, NULL, NULL, NULL, NULL );
     int res = process_wait( pid );
 
