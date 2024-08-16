@@ -41,6 +41,7 @@ void scene_main_update( f32 dt, struct SceneMain* state ) {
         SetMouseCursor( MOUSE_CURSOR_POINTING_HAND );
 
         if( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) ) {
+            SetMouseCursor( MOUSE_CURSOR_ARROW );
 
             switch( state->selected ) {
                 case MO_NONE: break;
@@ -56,6 +57,7 @@ void scene_main_update( f32 dt, struct SceneMain* state ) {
 }
 void scene_main_draw( f32 dt, struct SceneMain* state ) {
     unused(dt, state);
+    ClearBackground(BLACK);
 
     Vector2 screen;
     screen.x = GetScreenWidth();

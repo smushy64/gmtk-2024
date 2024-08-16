@@ -32,6 +32,7 @@ void scene_title_update( f32 dt, struct SceneTitle* state ) {
     unused(dt);
 }
 void scene_title_draw( f32 dt, struct SceneTitle* state ) {
+    ClearBackground(BLACK);
     f32 screen_width  = GetScreenWidth();
     f32 screen_height = GetScreenHeight();
 

@@ -14,7 +14,7 @@
 #include "sc_main.h"
 #include "sc_game.h"
 
-#define DEBUG_START SC_MAIN
+#define DEBUG_START SC_GAME
 
 struct GameState {
     f32 elapsed;
@@ -58,9 +58,6 @@ void game_update( f32 dt ) {
     global_game_state->elapsed += dt;
 }
 void game_draw( f32 dt ) {
-    unused(dt);
-    ClearBackground( BLACK );
-
     switch( global_game_state->current_scene ) {
         case SC_TITLE: {
             scene_title_draw( dt, &global_game_state->scene_state.title );
