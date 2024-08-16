@@ -102,10 +102,10 @@ void game_init(void) {
     struct GameState* state = MemAlloc( sizeof(*state) );
 
     state->font_text = LoadFontEx(
-        "resources/typeface/RobotoCondensed/RobotoCondensed-Regular.ttf",
+        "resources/typeface/RobotoCondensed-Regular.ttf",
         TEXT_FONT_SIZE, 0, 0 );
     state->font_title = LoadFontEx(
-        "resources/typeface/ChakraPetch/ChakraPetch-Bold.ttf",
+        "resources/typeface/ChakraPetch-Bold.ttf",
         TITLE_FONT_SIZE, 0, 0 );
 
     volatile b32 ready = false;

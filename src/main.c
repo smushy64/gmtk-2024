@@ -53,6 +53,25 @@ void Update(void) {
 
     f32 dt = GetFrameTime();
 
+#if !defined(PLATFORM_WEB)
+    if(
+        IsKeyPressed(KEY_F11) ||
+        (IsKeyDown(KEY_LEFT_ALT) && IsKeyPressed(KEY_ENTER))
+    ) {
+        if( IsWindowFullscreen() ) {
+            int display = GetCurrentMonitor();
+            int w = GetMonitorWidth( display );
+            int h = GetMonitorHeight( display );
+
+            SetWindowSize( w, h );
+        } else {
+            SetWindowSize( GAME_WIDTH, GAME_HEIGHT );
+        }
+
+        ToggleBorderlessWindowed();
+    }
+#endif
+
     game_update( dt );
     game_draw( dt );
 
