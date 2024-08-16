@@ -6,4 +6,7 @@
 */
 
 #include "main.c"
+#include "entry.c"
+#include "sc_title.c"
+#include "sc_main.c"
 

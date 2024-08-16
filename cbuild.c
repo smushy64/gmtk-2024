@@ -6,7 +6,12 @@
 */
 #include "cbuild.h"
 
+#define stringify(macro) #macro
+#define stringify_value(macro) stringify(macro)
+
 #define GAME_NAME "gmtk_2024"
+// 1 gib
+#define WEB_MAX_MEMORY 1073741824
 
 #if defined(PLATFORM_WINDOWS)
     #define BUILD_PATH_NATIVE "./build/native/" GAME_NAME ".exe"
@@ -14,7 +19,7 @@
     #define BUILD_PATH_NATIVE "./build/native/" GAME_NAME
 #endif
 
-#define BUILD_PATH_WEB "./build/web/" GAME_NAME ".html"
+#define BUILD_PATH_WEB "./build/web/index.html"
 
 enum Target {
     T_NATIVE,
@@ -32,6 +37,7 @@ int main( int argc, const char** argv ) {
     enum Target target = T_NATIVE;
     b32 test           = false;
     b32 release        = false;
+    b32 package        = false;
 
     for( int i = 1; i < argc; ++i ) {
         string arg = string_from_cstr( argv[i] );
@@ -71,9 +77,28 @@ int main( int argc, const char** argv ) {
             continue;
         }
 
+        if( string_cmp( arg, string_text( "--package" ) ) ) {
+            package = true;
+            continue;
+        }
+
         cb_error( "unrecognized argument '%.*s'!", arg.len, arg.cc );
         print_help();
         return -1;
+    }
+
+    if( package ) {
+        if( test ) {
+            cb_warn(
+                "--package and --test cannot be combined! "
+                "--package overrides --test" );
+        }
+        release = true;
+        test    = false;
+
+        if( path_exists( "./build" ) ) {
+            dir_remove( "./build", true );
+        }
     }
 
     if( !dir_create_checked( "./vendor" ) ) {
@@ -117,16 +142,17 @@ int main( int argc, const char** argv ) {
                     "-static-libgcc", "-O2",
                     #if defined(PLATFORM_WINDOWS)
                         "-lraylib", "-lgdi32", "-lwinmm", "-lopengl32",
+                        "-fuse-ld=lld", "-Wl,--subsystem,windows",
                     #elif defined(PLATFORM_LINUX)
                         "-lGL", "-lm", "-lpthread", "-ldl", "-lrt", "-lX11",
                     #endif
-                    "-Wall", "-Wextra", "-Werror=vla", "-o",
+                    "-Werror", "-Wall", "-Wextra", "-Werror=vla", "-o",
                     build_path );
             } else {
                 cmd = command_new(
                     "clang", "src/sources.c",
                     "vendor/native/libraylib.a",
-                    "-Isrc", "-Iraylib/src",
+                    "-Isrc", "-Iraylib/src", "-DDEBUG",
                     "-static-libgcc", "-O0", "-g",
                     #if defined(PLATFORM_WINDOWS)
                         "-fuse-ld=lld", "-Wl,/debug", "-gcodeview",
@@ -161,6 +187,7 @@ int main( int argc, const char** argv ) {
             }
 
             build_path = BUILD_PATH_WEB;
+            const char* max_mem = "TOTAL_MEMORY=" stringify_value(WEB_MAX_MEMORY);
 
             if(release) {
                 cmd = command_new(
@@ -173,8 +200,9 @@ int main( int argc, const char** argv ) {
                     "src/sources.c",
                     "vendor/web/libraylib.a",
                     "-Os", "-Wall", "-Wextra", "-Werror=vla",
-                    "-Isrc", "-Iraylib/src",
+                    "-Werror", "-Isrc", "-Iraylib/src",
                     "-s", "USE_GLFW=3",
+                    "-s", max_mem,
                     "--shell-file", "raylib/src/minshell.html",
                     "-DPLATFORM_WEB",
                     "--preload-file", "resources" );
@@ -189,8 +217,9 @@ int main( int argc, const char** argv ) {
                     "src/sources.c",
                     "vendor/web/libraylib.a",
                     "-g", "-O0", "-Wall", "-Wextra", "-Werror=vla",
-                    "-Isrc", "-Iraylib/src",
+                    "-Isrc", "-Iraylib/src", "-DDEBUG",
                     "-s", "USE_GLFW=3",
+                    "-s", max_mem,
                     "--shell-file", "raylib/src/minshell.html",
                     "-DPLATFORM_WEB",
                     "--preload-file", "resources" );
@@ -226,7 +255,70 @@ int main( int argc, const char** argv ) {
                 cb_info( "project exited with code %i", test_res );
             } break;
             case T_WEB: {
-                cb_warn( "web projects can't be automatically tested!" );
+                cb_warn( "cannot automatically test web project!" );
+            } break;
+        }
+    }
+
+    if( package ) {
+        if( !process_in_path( "zip" ) ) {
+            cb_error( "zip is required for packaging project!" );
+            return -1;
+        }
+
+        Command cmd = command_new( "zip", GAME_NAME, "resources", "-r" );
+        PID pid = process_exec( cmd, false, NULL, NULL, NULL, NULL );
+        int res = process_wait( pid );
+        if( res ) {
+            cb_error( "failed to zip project!" );
+            return -1;
+        }
+
+        switch( target ) {
+            case T_NATIVE: {
+                if( !file_move(
+                    "./build/native/" GAME_NAME ".zip",
+                    GAME_NAME ".zip"
+                ) ) {
+                    cb_error( "failed to move zipped resources to build directory!" );
+                    return -1;
+                }
+
+                const cstr* build_path =
+                    GAME_NAME
+                    #if defined(PLATFORM_WINDOWS)
+                        ".exe"
+                    #endif
+                    ;
+                cmd = command_new(
+                    "zip", GAME_NAME ".zip",
+                    build_path );
+
+                pid = process_exec( cmd, false, NULL, NULL, NULL, "./build/native" );
+                res = process_wait( pid );
+                if( res ) {
+                    cb_error( "failed to zip project!" );
+                    return -1;
+                }
+                cb_info( "zipped project at path ./build/native/" GAME_NAME ".zip!" );
+            } break;
+            case T_WEB: {
+                if( !file_move(
+                    "./build/web/" GAME_NAME ".zip",
+                    GAME_NAME ".zip"
+                ) ) {
+                    cb_error( "failed to move zipped resources to build directory!" );
+                    return -1;
+                }
+
+                cmd = command_new( "zip", GAME_NAME ".zip", "*" );
+                pid = process_exec( cmd, false, NULL, NULL, NULL, "./build/web" );
+                res = process_wait( pid );
+                if( res ) {
+                    cb_error( "failed to zip project!" );
+                    return -1;
+                }
+                cb_info( "zipped project at path ./build/web/" GAME_NAME ".zip!" );
             } break;
         }
     }
@@ -289,7 +381,8 @@ void print_help(void) {
     cb_info( "  --target=<target-name> Set compilation target." );
     cb_info( "                           valid: native, web" );
     cb_info( "  --test                 Run project after building." );
-    cb_info( "  --release              Compile project in release mode." );
+    cb_info( "  --release              Build project in release mode." );
+    cb_info( "  --package              Build in release mode and zip. Overrides --test.");
     cb_info( "  --help                 Print this message and exit." );
 }
 

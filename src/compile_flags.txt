@@ -1,5 +1,5 @@
 clang
---std=c11
+-std=c11
 -I.
 -I../raylib/src
 -Wall
