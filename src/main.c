@@ -30,6 +30,10 @@ int main( int argc, char** argv ) {
 
     InitWindow( GAME_WIDTH, GAME_HEIGHT, GAME_NAME );
 
+#if !defined(PLATFORM_WEB) && !defined(DEBUG)
+    SetExitKey(KEY_NULL);
+#endif
+
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop( Update, 0, 1 );
 #else

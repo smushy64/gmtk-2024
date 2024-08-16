@@ -12,6 +12,7 @@
 
 #include "sc_title.h"
 #include "sc_main.h"
+#include "sc_game.h"
 
 #define DEBUG_START SC_MAIN
 
@@ -22,6 +23,7 @@ struct GameState {
     union SceneState {
         struct SceneTitle title;
         struct SceneMain  main;
+        struct SceneGame  game;
     } scene_state;
 
     Font font_title;
@@ -47,6 +49,9 @@ void game_update( f32 dt ) {
         case SC_MAIN: {
             scene_main_update( dt, &global_game_state->scene_state.main );
         } break;
+        case SC_GAME: {
+            scene_game_update( dt, &global_game_state->scene_state.game );
+        } break;
         case SC_NONE: break;
     }
 
@@ -63,6 +68,9 @@ void game_draw( f32 dt ) {
         case SC_MAIN: {
             scene_main_draw( dt, &global_game_state->scene_state.main );
         } break;
+        case SC_GAME: {
+            scene_game_draw( dt, &global_game_state->scene_state.game );
+        } break;
         case SC_NONE: break;
     }
 }
@@ -78,6 +86,9 @@ void internal_scene_load( enum Scene scene ) {
         case SC_MAIN: {
             scene_main_unload( &global_game_state->scene_state.main );
         } break;
+        case SC_GAME: {
+            scene_game_unload( &global_game_state->scene_state.game );
+        } break;
         case SC_NONE: break;
     }
 
@@ -88,6 +99,9 @@ void internal_scene_load( enum Scene scene ) {
         } break;
         case SC_MAIN: {
             scene_main_load( &global_game_state->scene_state.main );
+        } break;
+        case SC_GAME: {
+            scene_game_load( &global_game_state->scene_state.game );
         } break;
         case SC_NONE: break;
     }
