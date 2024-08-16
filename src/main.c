@@ -12,10 +12,7 @@
     #include <emscripten/emscripten.h>
 #endif
 
-#define GAME_NAME "GMTK 2024"
-#define WIDTH 1280
-#define HEIGHT 720
-
+static b32 should_game_quit = false;
 void Update(void);
 void CustomLog( int msgType, const char* text, va_list args );
 
@@ -31,7 +28,7 @@ int main( int argc, char** argv ) {
     SetTraceLogLevel( LOG_NONE );
 #endif
 
-    InitWindow( WIDTH, HEIGHT, GAME_NAME );
+    InitWindow( GAME_WIDTH, GAME_HEIGHT, GAME_NAME );
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop( Update, 0, 1 );
@@ -42,7 +39,7 @@ int main( int argc, char** argv ) {
     SetWindowIcon( window_icon );
     UnloadImage( window_icon );
     SetTargetFPS(60);
-    while( !WindowShouldClose() ) {
+    while( !should_game_quit && !WindowShouldClose() ) {
         Update();
     }
 #endif
@@ -94,5 +91,9 @@ void CustomLog( int msgType, const char* text, va_list args ) {
 
     vprintf( text, args );
     printf(ANSI_COLOR_RESET "\n");
+}
+
+void quit_game(void) {
+    should_game_quit = true;
 }
 

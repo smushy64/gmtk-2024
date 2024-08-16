@@ -6,7 +6,7 @@
 */
 #include "sc_title.h"
 #include "entry.h"
-#include <math.h>
+#include "mathex.h"
 
 void scene_title_load( struct SceneTitle* out_state ) {
     out_state->opacity = 0.0f;
@@ -20,9 +20,6 @@ void scene_title_load( struct SceneTitle* out_state ) {
 }
 void scene_title_unload( struct SceneTitle* state ) {
     UnloadTexture( state->gmtk );
-}
-f32 inverse_lerp( f32 a, f32 b, f32 v ) {
-    return ( v - a ) / ( b - a );
 }
 void scene_title_update( f32 dt, struct SceneTitle* state ) {
     f32 t = inverse_lerp( 0.0f, SC_TITLE_LIFETIME, time_elapsed() );

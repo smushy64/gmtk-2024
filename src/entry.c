@@ -13,6 +13,8 @@
 #include "sc_title.h"
 #include "sc_main.h"
 
+#define DEBUG_START SC_MAIN
+
 struct GameState {
     f32 elapsed;
     enum Scene current_scene;
@@ -99,9 +101,12 @@ void scene_load( enum Scene scene ) {
 void game_init(void) {
     struct GameState* state = MemAlloc( sizeof(*state) );
 
-    state->font_text = LoadFont(
-        "resources/typeface/RobotoCondensed/RobotoCondensed-Regular.ttf");
-    state->font_title = LoadFont( "resources/typeface/ChakraPetch/ChakraPetch-Bold.ttf" );
+    state->font_text = LoadFontEx(
+        "resources/typeface/RobotoCondensed/RobotoCondensed-Regular.ttf",
+        TEXT_FONT_SIZE, 0, 0 );
+    state->font_title = LoadFontEx(
+        "resources/typeface/ChakraPetch/ChakraPetch-Bold.ttf",
+        TITLE_FONT_SIZE, 0, 0 );
 
     volatile b32 ready = false;
     while(!ready) {
@@ -112,7 +117,11 @@ void game_init(void) {
 
     global_game_state = state;
 
+#if defined(DEBUG)
+    internal_scene_load( DEBUG_START );
+#else
     internal_scene_load( SC_TITLE );
+#endif
 }
 
 f32 time_elapsed(void) {

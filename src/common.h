@@ -7,6 +7,7 @@
  * @date   August 15, 2024
 */
 #include <stdint.h>
+#include "raylib.h" // IWYU pragma: export
 
 static inline void _unused( int a, ... ) { (void)a; return; }
 #define unused(...) _unused( 0, __VA_ARGS__ )
@@ -33,19 +34,19 @@ typedef u32   b32;
 typedef u64   b64;
 typedef usize bsize;
 
-typedef struct String {
-    union {
-        const char* cc;
-        char* c;
-    };
-    u32 len;
-} String;
-
-#define string_new( str, length ) (String){ .cc=str, .len=length } 
-#define string_text( text ) string_new( text, sizeof(text) - 1 )
-
 #if !defined(NULL)
     #define NULL ((void*)0)
 #endif
+
+#define GAME_NAME "GMTK 2024"
+#define GAME_WIDTH 1280
+#define GAME_HEIGHT 720
+
+#define TEXT_FONT_SIZE (64)
+#define TEXT_FONT_SIZE_SMALL (32)
+#define TEXT_FONT_SIZE_SMALLEST (24)
+#define TITLE_FONT_SIZE (128)
+
+void quit_game(void);
 
 #endif /* header guard */

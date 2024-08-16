@@ -7,6 +7,8 @@
 
 #include "main.c"
 #include "entry.c"
+#include "mathex.c"
+#include "gui.c"
 #include "sc_title.c"
 #include "sc_main.c"
 
