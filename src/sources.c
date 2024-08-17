@@ -9,6 +9,7 @@
 #include "entry.c"
 #include "mathex.c"
 #include "gui.c"
+#include "physics.c"
 #include "sc_title.c"
 #include "sc_main.c"
 #include "sc_game.c"
