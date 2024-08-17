@@ -9,7 +9,10 @@
 #include "common.h"
 
 struct SceneGame {
-
+    struct Player {
+        Vector3 position;
+    } player;
+    Camera3D camera;
 };
 
 void scene_game_load( struct SceneGame* out_state );
