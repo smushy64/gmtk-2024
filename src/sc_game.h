@@ -9,15 +9,16 @@
 #include "common.h"
 #include "physics.h"
 
-#define CAMERA_OFFSET v3( 0.0f, 2.0f, -5.0f )
-#define CAMERA_TARGET_OFFSET v3( 0.0f, 1.0f, 0.0f )
+#define CAMERA_OFFSET v3( 0.0f, 1.8f, -3.0f )
+#define CAMERA_TARGET_OFFSET v3( 0.0f, 0.8f, 0.0f )
 
 #define PLAYER_MOVE_SPEED 2.0f
-#define PLAYER_DRAG 2.0f
+#define PLAYER_DRAG 2.5f
 #define PLAYER_MAX_VELOCITY 3.0f
 
-#define GRAVITY_SCALE 1.0f
+#define GRAVITY_SCALE 2.0f
 #define GRAVITY -9.8f
+#define ADDED_GRAVITY -0.12f
 
 #define PLAYER_CAPSULE_HEIGHT (1.0f)
 #define PLAYER_CAPSULE_RADIUS (0.25f)
@@ -25,35 +26,46 @@
 #define PLAYER_GROUND_CHECK_OFFSET v3( 0.0f, 0.25f, 0.0f )
 #define PLAYER_GROUND_CHECK_DIST   (0.3f)
 
-#define PLAYER_JUMP_FORCE (6.0f)
+#define PLAYER_JUMP_FORCE (12.5f)
 
 struct json_value_s;
 
 enum LevelObjectType {
     LOT_NULL,
     LOT_STATIC,
-    LOT_GROW,
-    LOT_SHRINK
+    LOT_RESIZE,
 };
 struct LevelObject {
     enum LevelObjectType type;
     union {
-        struct {
+        struct LevelObjectStatic {
             Model   geo;
             Model   col;
             Vector3 offset;
 
-            // not explicitly from json
-
-            b32 has_geo;
             b32 has_col;
         } t_static;
+        struct LevelObjectResize {
+            Model   geo;
+            Model   col;
+            Vector3 offset;
+
+            Vector3 size_start;
+            Vector3 size_end;
+
+            // not in json
+            Vector3 size;
+        } t_resize;
+        struct {
+        } t_music;
     };
 };
 struct Level {
     struct LevelObject* objects;
     usize object_count;
 };
+
+#define RESIZE_TIME (1.0f)
 
 struct SceneGame {
     struct Player {
@@ -74,18 +86,23 @@ struct SceneGame {
 
         b32 is_grounded;
         struct CollisionResult level_collision;
+        b32 corrected_collision;
 #if defined(DEBUG)
         b32 ground[4];
         struct CollisionResult last_level_collision;
 #endif
     } player;
 
+    Model model_player;
+
+    b32 last_resize_enabled;
+    b32 resize_enabled;
+    f32 resize_timer;
+    b32 resize_complete;
+
     u32 current_level;
     struct Level level;
 
-    /* Model m_level_geometry; */
-    /* Model m_level_collision; */
-    /**/
     Camera3D camera;
 };
 

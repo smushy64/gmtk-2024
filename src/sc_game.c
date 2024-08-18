@@ -16,6 +16,7 @@
 #include "debug.h"
 // IWYU pragma: end_keep
 #include "json.h"
+#include "rlgl.h"
 
 b32 string_cmp( struct json_string_s* a, struct json_string_s* b ) {
     if( a->string_size != b->string_size ) {
@@ -56,12 +57,14 @@ void level_unload( struct Level* level ) {
         switch( obj->type ) {
             case LOT_NULL: break;
             case LOT_STATIC: {
-                if( obj->t_static.has_geo ) {
-                    UnloadModel( obj->t_static.geo );
-                }
+                UnloadModel( obj->t_static.geo );
                 if( obj->t_static.has_col ) {
                     UnloadModel( obj->t_static.col );
                 }
+            } break;
+            case LOT_RESIZE: {
+                UnloadModel( obj->t_resize.geo );
+                UnloadModel( obj->t_resize.col );
             } break;
         }
     }
@@ -130,7 +133,6 @@ b32 level_load( struct SceneGame* game, u32 level ) {
                 if( elem && elem->value->type == json_type_string ) {
                     struct json_string_s* path = elem->value->payload;
                     lot->t_static.geo          = LoadModel( path->string );
-                    lot->t_static.has_geo      = true;
                 }
 
                 elem = find_item( obj, "col_path" );
@@ -165,6 +167,93 @@ b32 level_load( struct SceneGame* game, u32 level ) {
                 memcpy( &lot->t_static.offset, offset, sizeof(offset) );
 
             } break;
+            case LOT_RESIZE: {
+                struct LevelObject* lot = game->level.objects + lot_i++;
+                lot->type = type;
+
+                struct json_object_element_s* elem =
+                    find_item( obj, "geo_path" );
+                if( elem && elem->value->type == json_type_string ) {
+                    struct json_string_s* path = elem->value->payload;
+                    lot->t_resize.geo          = LoadModel( path->string );
+                }
+
+                elem = find_item( obj, "col_path" );
+                if( elem && elem->value->type == json_type_string ) {
+                    struct json_string_s* path = elem->value->payload;
+                    lot->t_resize.col          = LoadModel( path->string );
+                }
+
+                f32 offset[3];
+                memset( offset, 0, sizeof(offset) );
+                elem = find_item( obj, "offset" );
+                if( elem && elem->value->type == json_type_array ) {
+                    struct json_array_s* array = elem->value->payload;
+                    u32 max = 3;
+                    if( array->length < max ) {
+                        max = array->length;
+                    }
+                    for( u32 array_i = 0; array_i < max; ++array_i ) {
+                        struct json_array_element_s* array_elem =
+                            array->start + array_i;
+                        if( array_elem->value->type != json_type_number ) {
+                            break;
+                        }
+
+                        struct json_number_s* array_num = array_elem->value->payload;
+
+                        offset[array_i] = atof( array_num->number );
+                    }
+                }
+
+                memcpy( &lot->t_resize.offset, offset, sizeof(offset) );
+
+                f32 size_start[3] = { 0.1f, 0.1f, 0.1f };
+                elem = find_item( obj, "size_start" );
+                if( elem && elem->value->type == json_type_array ) {
+                    struct json_array_s* array = elem->value->payload;
+                    u32 max = 3;
+                    if( array->length < max ) {
+                        max = array->length;
+                    }
+                    for( u32 array_i = 0; array_i < max; ++array_i ) {
+                        struct json_array_element_s* array_elem =
+                            array->start + array_i;
+                        if( array_elem->value->type != json_type_number ) {
+                            break;
+                        }
+
+                        struct json_number_s* array_num = array_elem->value->payload;
+
+                        size_start[array_i] = atof( array_num->number );
+                    }
+                }
+                memcpy( &lot->t_resize.size_start, size_start, sizeof(size_start) );
+
+                f32 size_end[3] = { 0.1f, 0.1f, 0.1f };
+                elem = find_item( obj, "size_end" );
+                if( elem && elem->value->type == json_type_array ) {
+                    struct json_array_s* array = elem->value->payload;
+                    u32 max = 3;
+                    if( array->length < max ) {
+                        max = array->length;
+                    }
+                    for( u32 array_i = 0; array_i < max; ++array_i ) {
+                        struct json_array_element_s* array_elem =
+                            array->start + array_i;
+                        if( array_elem->value->type != json_type_number ) {
+                            break;
+                        }
+
+                        struct json_number_s* array_num = array_elem->value->payload;
+
+                        size_end[array_i] = atof( array_num->number );
+                    }
+                }
+                memcpy( &lot->t_resize.size_end, size_end, sizeof(size_end) );
+
+                lot->t_resize.size = lot->t_resize.size_start;
+            } break;
         }
         current = current->next;
     }
@@ -185,18 +274,19 @@ void scene_game_load( struct SceneGame* out_state ) {
     level_load( out_state, 0 );
     player_init( &out_state->player );
 
+    out_state->resize_enabled  = false;
+    out_state->resize_timer    = 0.0f;
+    out_state->resize_complete = false;
+
     out_state->camera.fovy       = 60.0f;
     out_state->camera.projection = CAMERA_PERSPECTIVE;
     out_state->camera.up         = v3_up();
 
-    /* out_state->m_level_geometry = LoadModel("resources/mesh/level/level01_geo.glb"); */
-    /* out_state->m_level_collision = LoadModel("resources/mesh/level/level01_col.glb"); */
-    /**/
+    out_state->model_player = LoadModel( "resources/mesh/player.glb" );
 }
 void scene_game_unload( struct SceneGame* state ) {
     level_unload( &state->level );
-    /* UnloadModel( state->m_level_geometry ); */
-    /* UnloadModel( state->m_level_collision ); */
+    UnloadModel( state->model_player );
 }
 void scene_game_update( f32 dt, struct SceneGame* state ) {
     unused(dt, state);
@@ -209,9 +299,23 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
     input_read( &player->input );
 
 #if defined(DEBUG)
-    if( IsKeyPressed( KEY_R ) ) {
-        memset( &player->transform, 0, sizeof(player->transform ) );
-        player->velocity = v3_zero();
+    {
+        b32 f5 = IsKeyPressed( KEY_F5 );
+        b32 r  = IsKeyPressed( KEY_R );
+
+        if( f5 || r ) {
+            if( f5 ) {
+                level_load( state, 0 );
+            }
+
+            player->transform.translation = v3_zero();
+            player->transform.rotation    = QuaternionIdentity();
+            player->transform.scale       = v3_one();
+
+            player->camera_rotation = v2_zero();
+
+            player->velocity = v3_zero();
+        }
     }
 #endif
 
@@ -265,13 +369,25 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
             player->transform.rotation, target_player_rotation, dt * 10.0f );
     }
 
+    // NOTE(alicia): JUMP LOGIC
     if( player->is_grounded ) {
         if( player->input.jump ) {
-            player_move.y += PLAYER_JUMP_FORCE;
+            Vector3 jump_direction = player->input.is_moving ?
+                Vector3RotateByQuaternion( v3_forward(), player->transform.rotation ) :
+                v3_zero();
+            jump_direction = Vector3Add( jump_direction, v3_up() );
+            Vector3 jump_magnitude =
+                Vector3Multiply(
+                    v3( 0.6f, 1.0f, 0.6f ),
+                    v3_scalar(PLAYER_JUMP_FORCE) );
+            Vector3 jump_vector = Vector3Multiply( jump_direction, jump_magnitude );
+            player_move = Vector3Add( player_move, jump_vector );
         }
-    }
-
-    if( player->is_grounded && player->input.jump ) {
+    } else {
+        player_move = Vector3Multiply( player_move, v3_scalar( 0.16f ) );
+        if( !player->input.jump_hold && player->velocity.y < 0.0f ) {
+            player->velocity.y += ADDED_GRAVITY;
+        }
     }
 
     player->velocity = Vector3Add( player->velocity, player_move );
@@ -282,6 +398,36 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
 
     player->capsule.radius = PLAYER_CAPSULE_RADIUS;
 
+    if( state->resize_enabled ) {
+        if( state->resize_complete ) {
+            state->resize_timer = RESIZE_TIME;
+        } else {
+            state->resize_timer += dt;
+            if( state->resize_timer >= RESIZE_TIME ) {
+                state->resize_complete = true;
+            }
+        }
+
+        f32 t = state->resize_timer / RESIZE_TIME;
+
+        for( usize i = 0; i < state->level.object_count; ++i ) {
+            struct LevelObject* obj = state->level.objects + i;
+            if( obj->type != LOT_RESIZE ) {
+                continue;
+            }
+
+            struct LevelObjectResize* resize = &obj->t_resize;
+
+            resize->size = v3_lerp( resize->size_start, resize->size_end, t );
+
+            Matrix mat = MatrixMultiply(
+                MatrixTranslate( resize->offset.x, resize->offset.y, resize->offset.z ),
+                MatrixScale( resize->size.x, resize->size.y, resize->size.z ) );
+            resize->geo.transform = mat;
+            resize->col.transform = mat;
+        }
+    }
+
     player_physics( player, state, dt );
 }
 void scene_game_draw( f32 dt, struct SceneGame* state ) {
@@ -289,7 +435,6 @@ void scene_game_draw( f32 dt, struct SceneGame* state ) {
     ClearBackground( (Color){ 102, 191, 255, 255 } );
 
     struct Player* player = &state->player;
-    unused(player);
 
     BeginMode3D( state->camera );
 
@@ -298,23 +443,33 @@ void scene_game_draw( f32 dt, struct SceneGame* state ) {
         switch( obj->type ) {
             case LOT_NULL: continue;
             case LOT_STATIC: {
-                if( obj->t_static.has_geo ) {
-                    DrawModel( obj->t_static.geo, obj->t_static.offset, 1.0f, WHITE );
-                }
+                DrawModel( obj->t_static.geo, obj->t_static.offset, 1.0f, WHITE );
+            } break;
+            case LOT_RESIZE: {
+                // TODO(alicia): slight tint on resizables?
+                DrawModel( obj->t_resize.geo, v3_zero(), 1.0f, WHITE );
             } break;
         }
     }
 
+    Vector3 player_forward =
+        Vector3RotateByQuaternion( v3_forward(), player->transform.rotation );
+
+    Vector3 axis  = v3_up();
+    f32     angle = Vector3Angle( v3_forward(), player_forward );
+    angle *= player_forward.x < 0.0f ? -1.0f : 1.0f;
+
+    state->model_player.transform = MatrixRotate( axis, angle );
+
+    DrawModel( state->model_player, player->transform.translation, 1.0f, WHITE );
+
 #if defined(DEBUG)
     /*debug*/ {
 
-        Vector3 player_forward =
-            Vector3RotateByQuaternion( v3_forward(), player->transform.rotation );
         Vector3 forward_line_start = Vector3Add(
             player->transform.translation, CAMERA_TARGET_OFFSET );
         Vector3 forward_line_end   = Vector3Add( forward_line_start, player_forward );
         DrawLine3D( forward_line_start, forward_line_end, BLUE );
-
 
         Vector3 ground_check_start, ground_check_end;
 
@@ -372,18 +527,35 @@ void scene_game_draw( f32 dt, struct SceneGame* state ) {
                         DrawBoundingBox( level_collision_bound, GREEN );
                     }
                 } break;
+                case LOT_RESIZE: {
+                    DrawModelWires( obj->t_resize.col, v3_zero(), 1.0f, GREEN );
+                    BoundingBox level_collision_bound =
+                        GetMeshBoundingBox( obj->t_resize.col.meshes[0] );
+                    DrawBoundingBox( level_collision_bound, GREEN );
+                } break;
             }
         }
 
         if( player->last_level_collision.hit ) {
             debug_draw_point( player->last_level_collision.point, 0.2f, RED );
+
             DrawLine3D( player->last_level_collision.point,
                 Vector3Add( player->last_level_collision.point,
                     player->last_level_collision.normal ), YELLOW );
+
             DrawLine3D( player->last_level_collision.point,
                 Vector3Add( player->last_level_collision.point,
                     Vector3Multiply(player->last_level_collision.normal,
                         v3_scalar(player->last_level_collision.distance) ) ), MAGENTA);
+
+            Vector3 up = v3_up();
+            Vector3 ortho_normal = player->last_level_collision.normal;
+            if( absf(Vector3DotProduct( up, ortho_normal )) != 1.0f ) {
+                Vector3OrthoNormalize( &up, &ortho_normal );
+            }
+            DrawLine3D( player->last_level_collision.point,
+                Vector3Add( player->last_level_collision.point,
+                    ortho_normal ), BLACK);
         }
 
     }
@@ -411,6 +583,11 @@ void scene_game_draw( f32 dt, struct SceneGame* state ) {
             v2( 0.0f, TEXT_FONT_SIZE_SMALLEST * 2 ),
             TEXT_FONT_SIZE_SMALLEST, ANCHOR_START, ANCHOR_START,
             col);
+        gui_text_draw(
+            font, TextFormat("Forward: %.2f, %.2f, %.2f Angle: %.2f", player_forward.x, player_forward.y, player_forward.z, angle ),
+            v2( 0.0f, TEXT_FONT_SIZE_SMALLEST * 3 ),
+            TEXT_FONT_SIZE_SMALLEST, ANCHOR_START, ANCHOR_START,
+            col);
     }
 #endif
 
@@ -419,12 +596,15 @@ void scene_game_draw( f32 dt, struct SceneGame* state ) {
 void player_init( struct Player* player ) {
     memset( player, 0, sizeof(*player) );
     player->transform.rotation = QuaternionIdentity();
+    player->transform.scale    = v3_one();
 }
 void player_physics( struct Player* player, struct SceneGame* scene, f32 dt ) {
     unused(scene);
 
-    player->velocity =
-        velocity_clamp_horizontal( player->velocity, PLAYER_MAX_VELOCITY );
+    if( player->is_grounded ) {
+        player->velocity =
+            velocity_clamp_horizontal( player->velocity, PLAYER_MAX_VELOCITY );
+    }
 
     u64 frames = frames_elapsed();
 
@@ -455,11 +635,22 @@ void player_physics( struct Player* player, struct SceneGame* scene, f32 dt ) {
                         goto exit_collision_check;
                     }
                 } break;
+                case LOT_RESIZE: {
+                    level_collision = collision_capsule_mesh(
+                        player->capsule.start, player->capsule.end,
+                        player->capsule.radius, obj->t_resize.col.transform,
+                        obj->t_resize.col.meshes[0] );
+
+                    if( level_collision.hit ) {
+                        goto exit_collision_check;
+                    }
+                } break;
             }
         }
     exit_collision_check:
 
         if( level_collision.hit ) {
+            player->corrected_collision = false;
 #if defined(DEBUG)
             player->last_level_collision = level_collision;
 #endif
@@ -489,6 +680,10 @@ void player_physics( struct Player* player, struct SceneGame* scene, f32 dt ) {
                     obj->t_static.offset.x,
                     obj->t_static.offset.y,
                     obj->t_static.offset.z );
+            } break;
+            case LOT_RESIZE: {
+                col       = obj->t_resize.col.meshes[0];
+                transform = obj->t_resize.col.transform;
             } break;
         }
 
@@ -557,11 +752,33 @@ void player_physics( struct Player* player, struct SceneGame* scene, f32 dt ) {
             Vector3Multiply( wanted_motion, v3_scalar( velocity_scale ) );
 
         f32 penetration_depth = (player->level_collision.distance) + EPSILON;
-        Vector3 penetration_translate =
+
+        Vector3 penetration_vector =
             Vector3Multiply(
                 player->level_collision.normal, v3_scalar(penetration_depth) );
+
+        if( !player->corrected_collision ) {
+            Vector3 up = v3_up();
+            Vector3 ortho_normal = player->level_collision.normal;
+            f32 dot = Vector3DotProduct( up, ortho_normal );
+            if( dot >= 0.99f ) {
+                ortho_normal = up;
+            } else if( dot <= - 0.99f) {
+                ortho_normal = v3_down();
+            } else {
+                Vector3OrthoNormalize( &up, &ortho_normal );
+            }
+
+            Vector3 penetration_translate = 
+                Vector3Multiply( ortho_normal, v3_scalar(penetration_depth) );
+
+            player->transform.translation =
+                Vector3Add( player->transform.translation, penetration_translate );
+            player->corrected_collision = true;
+        }
+
         player->velocity =
-            Vector3Add( player->velocity, penetration_translate );
+            Vector3Add( player->velocity, penetration_vector );
     }
 
     player->transform.translation = Vector3Add(

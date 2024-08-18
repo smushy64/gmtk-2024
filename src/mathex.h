@@ -20,6 +20,7 @@ Vector3 v3_lerp( Vector3 a, Vector3 b, f32 t );
 
 #define v2_scalar( v ) (Vector2){ .x=v, .y=v }
 #define v2( _x, _y ) (Vector2){ .x=_x, .y=_y }
+#define v2_zero() v2_scalar(0.0f)
 
 #define v3_scalar( v ) v3( v, v, v )
 #define v3( _x, _y, _z ) (Vector3){ _x, _y, _z }
