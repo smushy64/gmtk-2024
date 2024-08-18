@@ -1,0 +1,8 @@
+{
+    "main": {
+        "type": 1,
+        "geo_path": "resources/mesh/level/level01_geo.glb",
+        "col_path": "resources/mesh/level/level01_col.glb",
+        "offset":   [0.0, 0.0, 0.0]
+    }
+}

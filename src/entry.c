@@ -18,6 +18,7 @@
 
 struct GameState {
     f32 elapsed;
+    u64 frames_elapsed;
     enum Scene current_scene;
     enum Scene next_scene;
     union SceneState {
@@ -55,7 +56,6 @@ void game_update( f32 dt ) {
         case SC_NONE: break;
     }
 
-    global_game_state->elapsed += dt;
 }
 void game_draw( f32 dt ) {
     switch( global_game_state->current_scene ) {
@@ -70,11 +70,15 @@ void game_draw( f32 dt ) {
         } break;
         case SC_NONE: break;
     }
+
+    global_game_state->elapsed += dt;
+    global_game_state->frames_elapsed++;
 }
 
 void internal_scene_load( enum Scene scene ) {
-    global_game_state->elapsed    = 0.0f;
-    global_game_state->next_scene = SC_NONE;
+    global_game_state->elapsed        = 0.0f;
+    global_game_state->frames_elapsed = 0;
+    global_game_state->next_scene     = SC_NONE;
     
     switch( global_game_state->current_scene ) {
         case SC_TITLE: {
@@ -137,6 +141,9 @@ void game_init(void) {
 
 f32 time_elapsed(void) {
     return global_game_state->elapsed;
+}
+u64  frames_elapsed(void) {
+    return global_game_state->frames_elapsed;
 }
 Font font_title(void) {
     return global_game_state->font_title;

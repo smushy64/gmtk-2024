@@ -31,6 +31,7 @@ void game_update( f32 dt );
 void game_draw( f32 dt );
 
 f32  time_elapsed(void);
+u64  frames_elapsed(void);
 Font font_title(void);
 Font font_text(void);
 

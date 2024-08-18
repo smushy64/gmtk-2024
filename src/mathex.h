@@ -12,6 +12,8 @@
 #include "raymath.h"
 // IWYU pragma: end_exports
 
+#define absf( x ) ( ((x) < 0.0f) ? ((x) * -1.0f) : (x) )
+
 f32 inverse_lerp( f32 a, f32 b, f32 v );
 
 Vector3 v3_lerp( Vector3 a, Vector3 b, f32 t );

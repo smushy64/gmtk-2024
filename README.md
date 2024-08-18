@@ -64,5 +64,12 @@ for those using clangd.
 
 - Alicia Amarilla (smushy64) : Game Develpment
 
+### Code
+- [raylib](https://www.raylib.com/)
+- [json.h](https://github.com/sheredom/json.h)
+
+### Assets
+- [Kenney's Game Assets](https://kenney.nl/) : Level kitbash meshes
+
 Copyright (c) alicia amarilla 2024
 

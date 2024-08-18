@@ -5,4 +5,5 @@ clang
 -Wall
 -Wextra
 -Werror=vla
+-DDEBUG
 
