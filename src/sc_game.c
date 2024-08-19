@@ -468,9 +468,10 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
         player->max_velocity = PLAYER_MAX_VELOCITY;
     }
 
-    static const f32 max_rot = 75.0f * DEG2RAD;
+    static const f32 min_rot = -80.0f * DEG2RAD;
+    static const f32 max_rot =  50.0f * DEG2RAD;
     player->camera_rotation.y =
-        Clamp( player->camera_rotation.y, -max_rot, max_rot );
+        Clamp( player->camera_rotation.y, min_rot, max_rot );
 
     Quaternion camera_rotation =
         QuaternionFromEuler(
@@ -526,7 +527,7 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
             jump_direction = Vector3Add( jump_direction, v3_up() );
             Vector3 jump_magnitude =
                 Vector3Multiply(
-                    v3( 0.6f, 1.0f, 0.6f ),
+                    v3( 0.4f, 1.0f, 0.4f ),
                     v3_scalar(PLAYER_JUMP_FORCE) );
             Vector3 jump_vector = Vector3Multiply( jump_direction, jump_magnitude );
             player_move = Vector3Add( player_move, jump_vector );
@@ -534,11 +535,13 @@ void scene_game_update( f32 dt, struct SceneGame* state ) {
             PlaySound( state->sfx_jump );
         }
     } else {
-        player_move = Vector3Multiply( player_move, v3_scalar( 0.16f ) );
+        player_move = Vector3Multiply( player_move, v3_scalar( 0.1f ) );
         if( !player->input.jump_hold && player->velocity.y < 0.0f ) {
             player->velocity.y += ADDED_GRAVITY;
         }
     }
+
+    player_move = Vector3Multiply( player_move, v3_scalar(dt * 110.0f) );
 
     player->velocity = Vector3Add( player->velocity, player_move );
 
@@ -1062,7 +1065,8 @@ void player_physics( struct Player* player, struct SceneGame* scene, f32 dt ) {
         player->transform.translation,
         Vector3Multiply( player->velocity, v3_scalar(dt) ) );
 
-    player->velocity = velocity_apply_drag( player->velocity, PLAYER_DRAG, dt );
+    f32 drag = player->input.is_moving ? PLAYER_DRAG : PLAYER_DRAG * 2.0f;
+    player->velocity = velocity_apply_drag( player->velocity, drag, dt );
 }
 void input_read( struct Input* input ) {
     memset( input, 0, sizeof(*input) );

@@ -11,7 +11,7 @@
 
 #define GAME_NAME "gmtk_2024"
 // 1 gib
-#define WEB_MAX_MEMORY 1073741824
+#define WEB_MAX_MEMORY 536870912
 
 #if defined(PLATFORM_WINDOWS)
     #define BUILD_PATH_NATIVE "./build/native/" GAME_NAME ".exe"

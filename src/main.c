@@ -35,6 +35,7 @@ int main( int argc, char** argv ) {
     SetExitKey(KEY_NULL);
 #endif
 
+    SetTargetFPS(60);
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop( Update, 0, 1 );
 #else
@@ -43,7 +44,6 @@ int main( int argc, char** argv ) {
     }
     SetWindowIcon( window_icon );
     UnloadImage( window_icon );
-    SetTargetFPS(60);
     while( !should_game_quit && !WindowShouldClose() ) {
         Update();
     }

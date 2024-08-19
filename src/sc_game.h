@@ -27,7 +27,7 @@
 #define PLAYER_GROUND_CHECK_OFFSET v3( 0.0f, 0.25f, 0.0f )
 #define PLAYER_GROUND_CHECK_DIST   (0.3f)
 
-#define PLAYER_JUMP_FORCE (12.5f)
+#define PLAYER_JUMP_FORCE (6.5f)
 
 #define KILL_PLANE (-20.0f)
 
