@@ -38,7 +38,7 @@ typedef usize bsize;
     #define NULL ((void*)0)
 #endif
 
-#define GAME_NAME "GMTK 2024"
+#define GAME_NAME "GRAVITY STONE"
 #define GAME_WIDTH 1280
 #define GAME_HEIGHT 720
 

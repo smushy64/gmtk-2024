@@ -29,6 +29,7 @@ int main( int argc, char** argv ) {
 #endif
 
     InitWindow( GAME_WIDTH, GAME_HEIGHT, GAME_NAME );
+    InitAudioDevice();
 
 #if !defined(PLATFORM_WEB) && !defined(DEBUG)
     SetExitKey(KEY_NULL);
@@ -48,6 +49,7 @@ int main( int argc, char** argv ) {
     }
 #endif
 
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }

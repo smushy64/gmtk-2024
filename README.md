@@ -69,7 +69,7 @@ for those using clangd.
 - [json.h](https://github.com/sheredom/json.h)
 
 ### Assets
-- [Kenney's Game Assets](https://kenney.nl/) : Level kitbash meshes
+- [Kenney's Game Assets](https://kenney.nl/) : Level kitbash meshes, Music, SFX
 
 Copyright (c) alicia amarilla 2024
 

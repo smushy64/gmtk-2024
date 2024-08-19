@@ -27,6 +27,7 @@ enum MainOption {
 
 struct SceneMain {
     enum MainOption selected;
+    Music music;
 };
 
 void scene_main_load( struct SceneMain* out_state );

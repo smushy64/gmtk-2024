@@ -1,8 +1,68 @@
 {
-    "main": {
+    "islands": {
         "type": 1,
         "geo_path": "resources/mesh/level/level01_geo.glb",
-        "col_path": "resources/mesh/level/level01_col.glb",
-        "offset":   [0.0, 0.0, 0.0]
+        "col_path": "resources/mesh/level/level01_col01.glb"
+    },
+    "col2": {
+        "type": 1,
+        "col_path": "resources/mesh/level/level01_col02.glb"
+    },
+    "col3": {
+        "type": 1,
+        "col_path": "resources/mesh/level/level01_col03.glb"
+    },
+    "col4": {
+        "type": 1,
+        "col_path": "resources/mesh/level/level01_col04.glb"
+    },
+    "platform01": {
+        "type": 2,
+        "geo_path": "p1",
+        "col_path": "p1",
+        "offset": [-1.257, -0.68879, 13.671],
+        "size_end": [2.0, 2.0, 2.0]
+    },
+    "platform02": {
+        "type": 2,
+        "geo_path": "p1",
+        "col_path": "p1",
+        "offset": [-0.747, -1.8328, 27.253],
+        "size_end": [2.0, 2.0, 2.0]
+    },
+    "platform03": {
+        "type": 2,
+        "geo_path": "p2",
+        "col_path": "p2",
+        "offset": [-3.00, -0.316146, 34],
+        "size_start": [1.0, 0.05, 1.0],
+        "size_end": [1.0, 1.3, 1.0]
+    },
+    "platform04": {
+        "type": 2,
+        "geo_path": "p2",
+        "col_path": "p2",
+        "offset": [-0.910675, -1.3356, 35.4213],
+        "size_start": [1.0, 0.05, 1.0],
+        "size_end": [1.0, 1.0, 1.0]
+    },
+    "platform05": {
+        "type": 2,
+        "geo_path": "p2",
+        "col_path": "p2",
+        "offset": [-6.56047,1.23391,30.3762],
+        "size_start": [1.0, 0.05, 1.0],
+        "size_end": [1.0, 1.2, 1.0]
+    },
+    "platform06": {
+        "type": 2,
+        "geo_path": "p2",
+        "col_path": "p2",
+        "offset": [ 7.14527, 3.46574, 27.1805 ],
+        "size_start": [0.09, 1.0, 1.0],
+        "size_end": [8.0, 1.0, 1.0]
+    },
+    "level_finish": {
+        "position": [18.6,6.63165, 27.18 ]
     }
 }

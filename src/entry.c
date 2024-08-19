@@ -14,7 +14,8 @@
 #include "sc_main.h"
 #include "sc_game.h"
 
-#define DEBUG_START SC_GAME
+#define DEBUG_START SC_MAIN
+#define DEBUG_MUTE
 
 struct GameState {
     f32 elapsed;
@@ -76,6 +77,7 @@ void game_draw( f32 dt ) {
 }
 
 void internal_scene_load( enum Scene scene ) {
+    EnableCursor();
     global_game_state->elapsed        = 0.0f;
     global_game_state->frames_elapsed = 0;
     global_game_state->next_scene     = SC_NONE;
@@ -115,6 +117,10 @@ void scene_load( enum Scene scene ) {
 
 void game_init(void) {
     struct GameState* state = MemAlloc( sizeof(*state) );
+
+#if defined(DEBUG) && defined(DEBUG_MUTE)
+    SetMasterVolume( 0.0f );
+#endif
 
     state->font_text = LoadFontEx(
         "resources/typeface/RobotoCondensed-Regular.ttf",

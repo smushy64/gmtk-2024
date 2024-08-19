@@ -12,9 +12,10 @@
 #define CAMERA_OFFSET v3( 0.0f, 1.8f, -3.0f )
 #define CAMERA_TARGET_OFFSET v3( 0.0f, 0.8f, 0.0f )
 
-#define PLAYER_MOVE_SPEED 2.0f
+#define PLAYER_MOVE_SPEED 3.0f
 #define PLAYER_DRAG 2.5f
 #define PLAYER_MAX_VELOCITY 3.0f
+#define PLAYER_MAX_VELOCITY_RUN 5.0f
 
 #define GRAVITY_SCALE 2.0f
 #define GRAVITY -9.8f
@@ -28,7 +29,18 @@
 
 #define PLAYER_JUMP_FORCE (12.5f)
 
+#define KILL_PLANE (-20.0f)
+
+#define DEAD_TIME (3.0f)
+
 struct json_value_s;
+
+#define PLAYER_IDLE 1
+#define PLAYER_WALK 2
+#define PLAYER_RUN  3
+#define PLAYER_FALL 4
+
+#define ANIM_FT (0.0166f)
 
 enum LevelObjectType {
     LOT_NULL,
@@ -43,7 +55,9 @@ struct LevelObject {
             Model   col;
             Vector3 offset;
 
+            b32 has_geo;
             b32 has_col;
+
         } t_static;
         struct LevelObjectResize {
             Model   geo;
@@ -55,17 +69,19 @@ struct LevelObject {
 
             // not in json
             Vector3 size;
+            b32 geo_from_state;
+            b32 col_from_state;
         } t_resize;
-        struct {
-        } t_music;
     };
 };
 struct Level {
     struct LevelObject* objects;
     usize object_count;
+    Vector3 level_finish;
 };
 
-#define RESIZE_TIME (1.0f)
+#define RESIZE_TIME (0.2f)
+#define RESIZE_ON_TIME (1.4f)
 
 struct SceneGame {
     struct Player {
@@ -78,30 +94,66 @@ struct SceneGame {
             b32 jump;
             b32 jump_hold;
             b32 is_moving;
+            b32 run_hold;
             Vector2 move;
             Vector2 rotation;
+            b32 resize_hold;
         } input;
 
         Vector2 camera_rotation;
 
+        b32 is_dead;
+        b32 won;
+        b32 is_running;
+        f32 max_velocity;
         b32 is_grounded;
         struct CollisionResult level_collision;
         b32 corrected_collision;
+
 #if defined(DEBUG)
         b32 ground[4];
         struct CollisionResult last_level_collision;
 #endif
     } player;
 
-    Model model_player;
+    b32 last_dead;
 
+    Music music;
+    Music music_game_over;
+
+    Sound sfx_jump;
+    Sound sfx_resize;
+
+    Model model_player;
+    Texture tx_player_main;
+    Texture tx_player_hair;
+    Texture tx_player_eyes;
+    Texture tx_player_mouth;
+
+    Model platform1;
+    Model platform2;
+
+    ModelAnimation* player_anim;
+    int player_anim_count;
+
+    u32 anim_frame;
+    f32 anim_timer;
+
+    f32 resize_allowed_timer;
+    b32 resize_banned;
+    
     b32 last_resize_enabled;
     b32 resize_enabled;
     f32 resize_timer;
-    b32 resize_complete;
+    b32 resize_reverse;
+
+    f32 dead_timer;
+    f32 won_timer;
 
     u32 current_level;
     struct Level level;
+
+    int current_animation;
 
     Camera3D camera;
 };
